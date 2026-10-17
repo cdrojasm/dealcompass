@@ -3,8 +3,9 @@ import { createRoot } from "react-dom/client";
 import type { FormEvent } from "react";
 import "./styles.css";
 
-type Search = { id: string; query: string; location: string; status: string };
-type Lead = { id: number; name: string; role: string; company: string; initials: string; color: string; industry: string; size: string; location: string; score: number; stage: "Discovery" | "First contact" | "Qualification"; email: string; linkedin: string; date: string; snippet: string };
+type ApiIcp = { id: string; name: string; industry: string; company_size: string; target_roles: string };
+type Search = { id: string; icp_id?: string | null; query: string; location: string; status: string; leads_found?: number; contacted?: number; rejected?: number; fresh_leads?: number };
+type Lead = { id: number; name: string; role: string; company: string; initials: string; color: string; industry: string; size: string; location: string; score: number; stage: "Discovery" | "First contact" | "Qualification"; email: string; linkedin: string; date: string };
 const API_URL = import.meta.env.VITE_API_URL ?? "";
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, { ...init, headers: { "Content-Type": "application/json" } });
@@ -13,12 +14,12 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 const leads: Lead[] = [
-  { id: 1, name: "Sofia Ramirez", role: "VP of Revenue Operations", company: "Northstar Labs", initials: "SR", color: "lilac", industry: "B2B SaaS · Analytics", size: "51–200 employees", location: "Austin, TX", score: 96, stage: "First contact", email: "sofia@northstarlabs.io", linkedin: "linkedin.com/in/sofia-ramirez", date: "Today, 10:42 AM", snippet: "We’ve been looking at ways to make our outbound motion more predictable…" },
-  { id: 2, name: "Marcus Chen", role: "Founder & CEO", company: "Layerwise", initials: "MC", color: "mint", industry: "B2B SaaS · DevTools", size: "11–50 employees", location: "San Francisco, CA", score: 92, stage: "Qualification", email: "marcus@layerwise.dev", linkedin: "linkedin.com/in/marcus-chen", date: "Yesterday", snippet: "Interesting timing. Could you share a little more about the teams you work with?" },
-  { id: 3, name: "Priya Patel", role: "Chief Operating Officer", company: "Verity Health", initials: "PP", color: "peach", industry: "HealthTech", size: "201–500 employees", location: "New York, NY", score: 89, stage: "Discovery", email: "priya@verity.health", linkedin: "linkedin.com/in/priyapatel", date: "—", snippet: "No conversation yet" },
-  { id: 4, name: "James Okafor", role: "Head of Sales", company: "Formstacker", initials: "JO", color: "blue", industry: "B2B SaaS · Productivity", size: "51–200 employees", location: "Chicago, IL", score: 87, stage: "First contact", email: "james@formstacker.com", linkedin: "linkedin.com/in/james-okafor", date: "Oct 16, 2:18 PM", snippet: "Thanks for reaching out. We’re currently reviewing our sales tooling." },
-  { id: 5, name: "Elena Fischer", role: "Director of Growth", company: "Nimble Commerce", initials: "EF", color: "rose", industry: "E-commerce", size: "51–200 employees", location: "Denver, CO", score: 84, stage: "Discovery", email: "elena@nimblecommerce.co", linkedin: "linkedin.com/in/elena-fischer", date: "—", snippet: "No conversation yet" },
-  { id: 6, name: "Daniel Kim", role: "VP of Marketing", company: "Pylon AI", initials: "DK", color: "yellow", industry: "Artificial Intelligence", size: "11–50 employees", location: "Seattle, WA", score: 82, stage: "First contact", email: "daniel@pylon.ai", linkedin: "linkedin.com/in/daniel-kim", date: "Oct 15, 9:06 AM", snippet: "Can you send over a couple of examples from similar teams?" },
+  { id: 1, name: "Sofia Ramirez", role: "VP of Revenue Operations", company: "Northstar Labs", initials: "SR", color: "lilac", industry: "B2B SaaS · Analytics", size: "51–200 employees", location: "Austin, TX", score: 96, stage: "First contact", email: "sofia@northstarlabs.io", linkedin: "linkedin.com/in/sofia-ramirez", date: "Today, 10:42 AM" },
+  { id: 2, name: "Marcus Chen", role: "Founder & CEO", company: "Layerwise", initials: "MC", color: "mint", industry: "B2B SaaS · DevTools", size: "11–50 employees", location: "San Francisco, CA", score: 92, stage: "Qualification", email: "marcus@layerwise.dev", linkedin: "linkedin.com/in/marcus-chen", date: "Yesterday" },
+  { id: 3, name: "Priya Patel", role: "Chief Operating Officer", company: "Verity Health", initials: "PP", color: "peach", industry: "HealthTech", size: "201–500 employees", location: "New York, NY", score: 89, stage: "Discovery", email: "priya@verity.health", linkedin: "linkedin.com/in/priyapatel", date: "—" },
+  { id: 4, name: "James Okafor", role: "Head of Sales", company: "Formstacker", initials: "JO", color: "blue", industry: "B2B SaaS · Productivity", size: "51–200 employees", location: "Chicago, IL", score: 87, stage: "First contact", email: "james@formstacker.com", linkedin: "linkedin.com/in/james-okafor", date: "Oct 16, 2:18 PM" },
+  { id: 5, name: "Elena Fischer", role: "Director of Growth", company: "Nimble Commerce", initials: "EF", color: "rose", industry: "E-commerce", size: "51–200 employees", location: "Denver, CO", score: 84, stage: "Discovery", email: "elena@nimblecommerce.co", linkedin: "linkedin.com/in/elena-fischer", date: "—" },
+  { id: 6, name: "Daniel Kim", role: "VP of Marketing", company: "Pylon AI", initials: "DK", color: "yellow", industry: "Artificial Intelligence", size: "11–50 employees", location: "Seattle, WA", score: 82, stage: "First contact", email: "daniel@pylon.ai", linkedin: "linkedin.com/in/daniel-kim", date: "Oct 15, 9:06 AM" },
 ];
 const discoveries: Discovery[] = [
   { name: "Series A SaaS revenue teams", meta: "B2B SaaS · 50–200 employees", location: "North America", count: 48, contacted: 31, rejected: 4, fresh: 12, date: "Updated 2h ago", color: "purple", leadIds: [1, 2, 4, 6] },
@@ -34,8 +35,11 @@ const starterProfiles: IcpProfile[] = [
 ];
 type Page = "overview" | "profiles" | "discoveries" | "discovery-detail" | "detail";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function App() {
   const [page, setPage] = useState<Page>("overview");
+  const [previousPage, setPreviousPage] = useState<"overview" | "discovery-detail">("overview");
   const [selectedLead, setSelectedLead] = useState<Lead>(leads[0]);
   const [selectedDiscovery, setSelectedDiscovery] = useState<Discovery>(discoveries[0]);
   const [searches, setSearches] = useState<Search[]>([]);
@@ -47,182 +51,444 @@ function App() {
   const [locationProfile, setLocationProfile] = useState<IcpProfile | null>(null);
   const [query, setQuery] = useState("");
   const [industry, setIndustry] = useState("");
-  const [location, setLocation] = useState("");
   const [companySize, setCompanySize] = useState("");
   const [targetRoles, setTargetRoles] = useState("");
   const [toast, setToast] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
-  const [assistantOpen, setAssistantOpen] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([{ role: "assistant", text: "¡Hola! Puedo ayudarte a encontrar leads y gestionar tus discoveries. Cuéntame qué tipo de clientes quieres encontrar." }]);
-  const [proposalReady, setProposalReady] = useState(false);
-  const load = () => api<Search[]>("/api/v1/searches").then(setSearches).catch(() => setSearches([]));
+
+  const load = () => {
+    api<Search[]>("/api/v1/searches").then(setSearches).catch(() => setSearches([]));
+    api<ApiIcp[]>("/api/v1/icps")
+      .then(rows => {
+        if (rows.length > 0) {
+          setIcpProfiles([
+            ...starterProfiles,
+            ...rows.map(r => ({ id: r.id, name: r.name, industry: r.industry, companySize: r.company_size, targetRoles: r.target_roles })),
+          ]);
+        }
+      })
+      .catch(() => {});
+  };
   useEffect(() => { load(); }, []);
   useEffect(() => { localStorage.setItem("dealcompass.icpProfiles", JSON.stringify(icpProfiles)); }, [icpProfiles]);
-  function sendChat(event: FormEvent) {
+
+  const allDiscoveries: Discovery[] = [
+    ...discoveries,
+    ...createdRuns,
+    ...searches.map(s => {
+      const profile = icpProfiles.find(p => p.id === s.icp_id || s.query.startsWith(p.name));
+      return {
+        name: profile?.name ?? s.query,
+        meta: profile ? [profile.industry, profile.companySize, profile.targetRoles].filter(Boolean).join(" · ") : "ICP from your targeting criteria",
+        location: s.location,
+        count: s.leads_found ?? 0,
+        contacted: s.contacted ?? 0,
+        rejected: s.rejected ?? 0,
+        fresh: s.fresh_leads ?? 0,
+        date: s.status,
+        color: "purple",
+        leadIds: [],
+      };
+    }),
+  ];
+
+  async function createProfile(event: FormEvent) {
     event.preventDefault();
-    const prompt = chatInput.trim();
-    if (!prompt) return;
-    setChatMessages(current => [...current, { role: "user", text: prompt }, { role: "assistant", text: `Entendí que buscas ${prompt}. Te propongo guardar un ICP reutilizable con industria, tamaño de empresa y roles objetivo. La ubicación se elige después al crear un ICP discovery. ¿Te sirven estos criterios?` }]);
-    setQuery(prompt);
-    setIndustry(/fintech/i.test(prompt) ? "Fintech" : /health/i.test(prompt) ? "HealthTech" : "B2B SaaS");
-    setCompanySize(/20\s*[-–]?\s*100/i.test(prompt) ? "20–100 employees" : "50–200 employees");
-    setTargetRoles(/sales|vendedor/i.test(prompt) ? "Sales, Revenue, Growth" : "Revenue, Growth, Sales");
-    setProposalReady(true);
-    setChatInput("");
-  }
-  function useProposal() {
-    setProposalReady(false);
-    setChatMessages(current => [...current, { role: "assistant", text: "Ya puse los criterios del ICP en el formulario. Revísalos y guarda el perfil; después puedes iniciar discoveries en una o varias ubicaciones." }]);
-    setAssistantOpen(false);
-    setCreateOpen(true);
-  }
-  function createProfile(event: FormEvent) {
-    event.preventDefault();
-    const profile = { id: `icp-${Date.now()}`, name: query, industry, companySize, targetRoles };
+    let createdId = `icp-${Date.now()}`;
+    try {
+      const saved = await api<ApiIcp>("/api/v1/icps", {
+        method: "POST",
+        body: JSON.stringify({ name: query, industry, company_size: companySize, target_roles: targetRoles }),
+      });
+      createdId = saved.id;
+    } catch {
+      // Fallback to localStorage ID when offline
+    }
+    const profile = { id: createdId, name: query, industry, companySize, targetRoles };
     setIcpProfiles(current => [...current, profile]);
     setCreateOpen(false);
     setPage("profiles");
-    setChatMessages(current => [...current, { role: "assistant", text: `Guardé el ICP “${profile.name}”. Ahora puedes crear discoveries buscando este perfil en una o varias ubicaciones.` }]);
-    setToast("ICP profile created"); setTimeout(() => setToast(""), 2500);
+    setToast("ICP created");
+    setTimeout(() => setToast(""), 2500);
   }
+
   async function launchLocationSearch(profile: IcpProfile, searchLocation: string) {
     try {
       const description = [profile.name, profile.industry, profile.companySize, profile.targetRoles && `Roles: ${profile.targetRoles}`].filter(Boolean).join(" · ");
-      await api<Search>("/api/v1/searches", { method: "POST", body: JSON.stringify({ query: description, location: searchLocation }) });
-      const run: Discovery = { name: profile.name, meta: [profile.industry, profile.companySize, profile.targetRoles].filter(Boolean).join(" · "), location: searchLocation, count: 0, contacted: 0, rejected: 0, fresh: 0, date: "Just created", color: "purple", leadIds: [] };
-      setCreatedRuns(current => [run, ...current]);
+      const icpId = UUID_RE.test(profile.id) ? profile.id : null;
+      await api<Search>("/api/v1/searches", { method: "POST", body: JSON.stringify({ query: description, location: searchLocation, icp_id: icpId }) });
+      const updatedSearches = await api<Search[]>("/api/v1/searches").catch(() => null);
+      if (updatedSearches) {
+        setSearches(updatedSearches);
+      } else {
+        const run: Discovery = { name: profile.name, meta: [profile.industry, profile.companySize, profile.targetRoles].filter(Boolean).join(" · "), location: searchLocation, count: 0, contacted: 0, rejected: 0, fresh: 0, date: "Just created", color: "purple", leadIds: [] };
+        setCreatedRuns(current => [run, ...current]);
+      }
       setLocationProfile(null);
       setPage("discoveries");
-      setToast(`Discovery started in ${searchLocation}`); setTimeout(() => setToast(""), 2500);
-    } catch (e) { setToast(`Could not start discovery: ${String(e)}`); setTimeout(() => setToast(""), 3500); }
+      setToast(`Discovery started in ${searchLocation}`);
+      setTimeout(() => setToast(""), 2500);
+    } catch (e) {
+      setToast(`Could not start discovery: ${String(e)}`);
+      setTimeout(() => setToast(""), 3500);
+    }
   }
-  function openLead(lead: Lead) { setSelectedLead(lead); setPage("detail"); }
-  function openDiscovery(discovery: Discovery) { setSelectedDiscovery(discovery); setPage("discovery-detail"); }
+
+  function openLead(lead: Lead, from: "overview" | "discovery-detail") {
+    setSelectedLead(lead);
+    setPreviousPage(from);
+    setPage("detail");
+  }
+
+  function openDiscovery(discovery: Discovery) {
+    setSelectedDiscovery(discovery);
+    setPage("discovery-detail");
+  }
+
+  function openCreateModal() {
+    setQuery("");
+    setIndustry("");
+    setCompanySize("");
+    setTargetRoles("");
+    setCreateOpen(true);
+  }
+
+  const leadDiscovery = allDiscoveries.find(d => d.leadIds.includes(selectedLead.id)) ?? selectedDiscovery;
+
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="brand"><div className="brand-mark"><span/><span/><span/></div><span>dealcompass</span></div>
       <div className="nav-label">WORKSPACE</div>
       <nav>
         <button className={page === "overview" ? "nav-item active" : "nav-item"} onClick={() => setPage("overview")}><Icon name="grid"/>Overview</button>
-        <button className={page === "profiles" ? "nav-item active" : "nav-item"} onClick={() => setPage("profiles")}><Icon name="target"/>ICP profiles<span className="nav-count">{icpProfiles.length}</span></button>
-        <button className={page === "discoveries" || page === "discovery-detail" ? "nav-item active" : "nav-item"} onClick={() => setPage("discoveries")}><Icon name="spark"/>ICP discoveries<span className="nav-count">{discoveries.length + createdRuns.length}</span></button>
+        <button className={page === "profiles" ? "nav-item active" : "nav-item"} onClick={() => setPage("profiles")}><Icon name="target"/>ICP<span className="nav-count">{icpProfiles.length}</span></button>
+        <button className={page === "discoveries" || page === "discovery-detail" ? "nav-item active" : "nav-item"} onClick={() => setPage("discoveries")}><Icon name="spark"/>ICP discoveries<span className="nav-count">{allDiscoveries.length}</span></button>
       </nav>
-      <div className="sidebar-bottom"><div className="usage"><div className="usage-top"><span>Credits this month</span><b>2,450 <span>/ 5,000</span></b></div><div className="usage-track"><i/></div><a>Upgrade plan <span>↗</span></a></div><button className="profile"><div className="avatar profile-avatar">DR</div><div><strong>David Rojas</strong><small>Admin</small></div><span className="chevron">···</span></button></div>
     </aside>
 
     <main className="main-area">
-      <header className="topbar"><div className="breadcrumbs"><span>Acme Growth</span><b>/</b><strong>{page === "overview" ? "Overview" : page === "profiles" ? "ICP profiles" : page === "discoveries" ? "ICP discoveries" : page === "discovery-detail" ? selectedDiscovery.name : selectedLead.name}</strong></div><div className="top-actions"><button className="icon-button" aria-label="Search"><Icon name="search"/></button><button className="icon-button notification" aria-label="Notifications"><Icon name="bell"/><i/></button><div className="top-divider"/><span className="help">Help center</span><div className="avatar top-avatar">DR</div></div></header>
-      {page === "overview" && <Overview leads={leads} openLead={openLead} goDiscoveries={() => setPage("discoveries")} openCreate={() => { setQuery(""); setIndustry(""); setCompanySize(""); setTargetRoles(""); setCreateOpen(true); setAssistantOpen(false); }} />}
-      {page === "profiles" && <Profiles profiles={icpProfiles} discoveryCounts={new Map(icpProfiles.map(p => [p.name, [...discoveries, ...createdRuns].filter(d => d.name === p.name).length + searches.filter(s => s.query.startsWith(p.name)).length]))} openCreate={() => { setQuery(""); setIndustry(""); setCompanySize(""); setTargetRoles(""); setCreateOpen(true); setAssistantOpen(false); }} onRunSearch={profile => { setLocationProfile(profile); setLocation(""); }} />}
-      {page === "discoveries" && <Discoveries searches={searches} profiles={icpProfiles} createdRuns={createdRuns} openDiscovery={openDiscovery} openCreate={() => setPage("profiles")} />}
-      {page === "discovery-detail" && <DiscoveryDetail discovery={selectedDiscovery} back={() => setPage("discoveries")} openLead={openLead} />}
-      {page === "detail" && <Detail lead={selectedLead} back={() => setPage("discovery-detail")} discovery={selectedDiscovery} />}
+      <header className="topbar">
+        <div className="breadcrumbs">
+          <strong>{page === "overview" ? "Overview" : page === "profiles" ? "ICP" : page === "discoveries" ? "ICP discoveries" : page === "discovery-detail" ? selectedDiscovery.name : selectedLead.name}</strong>
+        </div>
+      </header>
+      {page === "overview" && <Overview leads={leads} profilesCount={icpProfiles.length} discoveriesCount={allDiscoveries.length} openLead={lead => openLead(lead, "overview")} goDiscoveries={() => setPage("discoveries")} openCreate={openCreateModal} />}
+      {page === "profiles" && <Profiles profiles={icpProfiles} discoveryCounts={new Map(icpProfiles.map(p => [p.name, allDiscoveries.filter(d => d.name === p.name).length]))} openCreate={openCreateModal} onRunSearch={profile => setLocationProfile(profile)} />}
+      {page === "discoveries" && <Discoveries discoveries={allDiscoveries} openDiscovery={openDiscovery} openCreate={() => setPage("profiles")} />}
+      {page === "discovery-detail" && <DiscoveryDetail discovery={selectedDiscovery} back={() => setPage("discoveries")} openLead={lead => openLead(lead, "discovery-detail")} />}
+      {page === "detail" && <Detail lead={selectedLead} back={() => setPage(previousPage)} backLabel={previousPage === "overview" ? "Back to overview" : `Back to ${selectedDiscovery.name}`} discovery={leadDiscovery} />}
     </main>
-    <button className="assistant-launcher" onClick={() => { setAssistantOpen(true); setCreateOpen(false); }} aria-label="Open DealCompass assistant"><Icon name="spark"/><span>Ask DealCompass</span></button>
     {createOpen && <CreateModal close={() => setCreateOpen(false)} query={query} setQuery={setQuery} industry={industry} setIndustry={setIndustry} companySize={companySize} setCompanySize={setCompanySize} targetRoles={targetRoles} setTargetRoles={setTargetRoles} createProfile={createProfile} />}
     {locationProfile && <LocationDiscoveryModal profile={locationProfile} close={() => setLocationProfile(null)} onStart={launchLocationSearch} />}
-    {locationProfile && <LocationDiscoveryModal profile={locationProfile} close={() => setLocationProfile(null)} onStart={launchLocationSearch} />}
-    {assistantOpen && <AssistantDrawer close={() => setAssistantOpen(false)} chatInput={chatInput} setChatInput={setChatInput} chatMessages={chatMessages} proposalReady={proposalReady} useProposal={useProposal} sendChat={sendChat} industry={industry} companySize={companySize} targetRoles={targetRoles} />}
     {toast && <div className="toast"><span>✓</span>{toast}</div>}
   </div>;
 }
 
-type ChatMessage = { role: "user" | "assistant"; text: string };
 type DiscoveryFormProps = { close: () => void; query: string; setQuery: (v: string) => void; industry: string; setIndustry: (v: string) => void; companySize: string; setCompanySize: (v: string) => void; targetRoles: string; setTargetRoles: (v: string) => void; createProfile: (e: FormEvent) => void };
 function CreateModal(props: DiscoveryFormProps) {
-  return <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) props.close(); }}><section className="create-modal form-only-modal"><header className="modal-header"><div><span className="modal-mark"><Icon name="target"/></span><div><h2>Create an ICP profile</h2><p>Define your ideal customer once, then search it in different locations.</p></div></div><button className="modal-close" onClick={props.close}>×</button></header><form className="discovery-form" onSubmit={props.createProfile}><div className="form-intro"><span className="discovery-icon purple"><Icon name="target"/></span><div><h3>Reusable ICP profile</h3><p>These criteria describe the customer. Location belongs to each discovery.</p></div></div><label>ICP profile name<input value={props.query} onChange={e => props.setQuery(e.target.value)} placeholder="e.g. Growth-stage fintechs" required/></label><div className="form-two-col"><label>Industry<input value={props.industry} onChange={e => props.setIndustry(e.target.value)} placeholder="e.g. B2B SaaS, Fintech"/></label><label>Company size<select value={props.companySize} onChange={e => props.setCompanySize(e.target.value)}><option value="">Any company size</option><option>1–10 employees</option><option>11–50 employees</option><option>20–100 employees</option><option>50–200 employees</option><option>201–500 employees</option><option>500+ employees</option></select></label></div><label>Target roles<input value={props.targetRoles} onChange={e => props.setTargetRoles(e.target.value)} placeholder="e.g. VP Sales, Head of Growth"/></label><label>Additional context<textarea className="context-input" placeholder="Technologies, growth signals, or other requirements…"/></label><div className="form-footer"><span>✦ &nbsp;Create this profile once and reuse it by location.</span><button type="button" className="button secondary" onClick={props.close}>Cancel</button><button className="button primary"><Icon name="plus"/>Create ICP profile</button></div></form></section></div>;
-}
-function AssistantDrawer({ close, chatInput, setChatInput, chatMessages, proposalReady, useProposal, sendChat, industry, companySize, targetRoles }: { close: () => void; chatInput: string; setChatInput: (v: string) => void; chatMessages: ChatMessage[]; proposalReady: boolean; useProposal: () => void; sendChat: (e: FormEvent) => void; industry: string; companySize: string; targetRoles: string }) {
-  return <div className="assistant-drawer-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) close(); }}><aside className="assistant-drawer"><header className="drawer-header"><div><span className="modal-mark"><Icon name="spark"/></span><div><b>DealCompass assistant</b><small>Control your prospecting workspace</small></div></div><button className="modal-close" onClick={close}>×</button></header><div className="drawer-context"><span className="context-dot"/> Acme Growth <span>·</span> Workspace context enabled</div><div className="chat-thread">{chatMessages.map((message, i) => <div className={`chat-message ${message.role}`} key={i}><div className={`chat-avatar ${message.role}`}>{message.role === "assistant" ? <Icon name="spark"/> : "DR"}</div><div className="chat-bubble">{message.text}{message.role === "assistant" && i === chatMessages.length - 1 && proposalReady && <div className="proposal-card"><div className="proposal-title"><Icon name="target"/><b>Suggested ICP criteria</b></div><div className="proposal-row"><small>INDUSTRY</small><b>{industry || "B2B SaaS"}</b></div><div className="proposal-row"><small>SIZE</small><b>{companySize || "50–200 employees"}</b></div><div className="proposal-row"><small>ROLES</small><b>{targetRoles}</b></div><div className="proposal-actions"><button className="button primary" onClick={useProposal}>Open ICP profile form</button></div></div>}</div></div>)}</div><div className="chat-suggestions"><button onClick={() => setChatInput("startups fintech en Colombia")}>Fintech en Colombia</button><button onClick={() => setChatInput("empresas SaaS que estén contratando vendedores")}>SaaS contratando ventas</button></div><form className="chat-composer" onSubmit={sendChat}><textarea value={chatInput} onChange={e => setChatInput(e.target.value)} placeholder="¿Qué quieres hacer en DealCompass?" onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); (e.currentTarget.form as HTMLFormElement)?.requestSubmit(); } }}/><div><span>Enter para enviar · Shift + Enter para nueva línea</span><button className="send-chat" aria-label="Send message"><Icon name="send"/></button></div></form></aside></div>;
-}
-
-function Overview({ leads, openLead, goDiscoveries, openCreate }: { leads: Lead[]; openLead: (l: Lead) => void; goDiscoveries: () => void; openCreate: () => void }) {
-  return <div className="content overview-content">
-    <div className="page-heading"><div><div className="eyebrow">FRIDAY, OCTOBER 17, 2026 <span className="live-dot"/> LIVE DATA</div><h1>Good morning, David <span className="wave">✳</span></h1><p>Here’s what’s happening with your pipeline today.</p></div><div className="heading-actions"><button className="button secondary" onClick={() => window.print()}><Icon name="download"/>Export</button><button className="button primary" onClick={openCreate}><Icon name="plus"/>New ICP profile</button></div></div>
-    <section className="stats-grid">
-      <Stat title="Leads discovered" value="1,284" change="18.6%" foot="vs. previous period" icon="spark" color="lavender" chart="M2 37 C16 33 19 30 29 31 S44 23 53 28 S70 20 79 22 S93 9 108 14 S122 8 138 5" />
-      <Stat title="First contacts sent" value="846" change="12.4%" foot="vs. previous period" icon="send" color="blue" chart="M2 36 C12 29 19 35 29 28 S45 29 56 22 S68 26 79 18 S93 22 103 11 S123 18 138 4" />
-      <Stat title="Reply rate" value="24.8%" change="4.2%" foot="vs. previous period" icon="message" color="green" chart="M2 34 C15 32 21 18 31 22 S45 30 57 19 S69 20 80 12 S96 17 105 8 S126 12 138 4" />
-      <Stat title="Qualified pipeline" value="$184.5k" change="22.1%" foot="vs. previous period" icon="target" color="orange" chart="M2 35 C13 30 20 32 30 26 S43 29 54 18 S69 26 80 15 S96 20 106 10 S125 11 138 3" />
+  return <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) props.close(); }}>
+    <section className="create-modal form-only-modal">
+      <header className="modal-header">
+        <div>
+          <span className="modal-mark"><Icon name="target"/></span>
+          <div>
+            <h2>Create an ICP</h2>
+            <p>Define your ideal customer once, then search it in different locations.</p>
+          </div>
+        </div>
+        <button className="modal-close" onClick={props.close}>×</button>
+      </header>
+      <form className="discovery-form" onSubmit={props.createProfile}>
+        <label>ICP name<input value={props.query} onChange={e => props.setQuery(e.target.value)} placeholder="e.g. Growth-stage fintechs" required/></label>
+        <div className="form-two-col">
+          <label>Industry<input value={props.industry} onChange={e => props.setIndustry(e.target.value)} placeholder="e.g. B2B SaaS, Fintech"/></label>
+          <label>Company size
+            <select value={props.companySize} onChange={e => props.setCompanySize(e.target.value)}>
+              <option value="">Any company size</option>
+              <option>1–10 employees</option>
+              <option>11–50 employees</option>
+              <option>20–100 employees</option>
+              <option>50–200 employees</option>
+              <option>201–500 employees</option>
+              <option>500+ employees</option>
+            </select>
+          </label>
+        </div>
+        <label>Target roles<input value={props.targetRoles} onChange={e => props.setTargetRoles(e.target.value)} placeholder="e.g. VP Sales, Head of Growth"/></label>
+        <div className="form-footer">
+          <button type="button" className="button secondary" onClick={props.close}>Cancel</button>
+          <button className="button primary"><Icon name="plus"/>Create ICP</button>
+        </div>
+      </form>
     </section>
-    <div className="dashboard-grid">
-      <section className="panel performance-panel"><div className="panel-head"><div><h2>Pipeline performance</h2><p>Lead activity over time</p></div><button className="tiny-select">All stages <span>⌄</span></button></div><div className="chart-legend"><span><i className="legend-dot purple-dot"/>Discovered</span><span><i className="legend-dot blue-dot"/>Contacted</span><span><i className="legend-dot green-dot"/>Qualified</span></div><div className="chart-wrap"><div className="chart-y"><span>400</span><span>300</span><span>200</span><span>100</span><span>0</span></div><div className="chart"><div className="gridline g1"/><div className="gridline g2"/><div className="gridline g3"/><div className="gridline g4"/><svg viewBox="0 0 700 200" preserveAspectRatio="none"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#8772e6" stopOpacity=".15"/><stop offset="1" stopColor="#8772e6" stopOpacity="0"/></linearGradient></defs><path d="M0 157 C30 150 45 130 70 139 S110 125 140 128 S180 98 210 110 S245 91 280 103 S320 75 350 87 S390 82 420 68 S465 81 490 60 S530 53 560 61 S600 32 630 43 S670 24 700 18 L700 200 L0 200Z" fill="url(#area)"/><path d="M0 157 C30 150 45 130 70 139 S110 125 140 128 S180 98 210 110 S245 91 280 103 S320 75 350 87 S390 82 420 68 S465 81 490 60 S530 53 560 61 S600 32 630 43 S670 24 700 18" fill="none" stroke="#8772e6" strokeWidth="3"/><path d="M0 173 C30 165 47 168 70 159 S112 155 140 151 S178 140 210 144 S247 124 280 133 S320 112 350 122 S390 107 420 111 S465 93 490 104 S530 85 560 94 S600 68 630 76 S672 58 700 65" fill="none" stroke="#71a9f4" strokeWidth="2.5"/><path d="M0 190 C30 188 45 182 70 184 S110 174 140 180 S180 165 210 170 S245 158 280 163 S320 145 350 156 S390 139 420 148 S460 128 490 139 S530 119 560 128 S600 109 630 117 S670 99 700 105" fill="none" stroke="#50b798" strokeWidth="2.5"/></svg><div className="chart-x"><span>Sep 19</span><span>Sep 24</span><span>Sep 29</span><span>Oct 4</span><span>Oct 9</span><span>Oct 14</span><span>Oct 17</span></div></div></div></section>
-      <section className="panel sources-panel"><div className="panel-head"><div><h2>Lead sources</h2><p>Where your leads come from</p></div><button className="more-button">···</button></div><div className="donut-area"><div className="donut"><div><strong>1,284</strong><small>Total leads</small></div></div></div><div className="source-list"><div><span><i className="legend-dot purple-dot"/>ICP discovery</span><b>642 <small>50%</small></b></div><div><span><i className="legend-dot blue-dot"/>Inbound</span><b>385 <small>30%</small></b></div><div><span><i className="legend-dot green-dot"/>Enrichment</span><b>257 <small>20%</small></b></div></div></section>
-    </div>
-    <section className="panel recent-panel"><div className="panel-head"><div><h2>Recent leads</h2><p>Your latest discovered prospects</p></div><button className="link-button" onClick={goDiscoveries}>View all leads <span>→</span></button></div><div className="table-wrap"><LeadTable leads={leads.slice(0, 4)} openLead={openLead}/></div></section>
   </div>;
 }
 
-function Stat({ title, value, change, foot, icon, color, chart }: { title: string; value: string; change: string; foot: string; icon: string; color: string; chart: string }) {
-  return <div className="stat-card"><div className="stat-top"><span>{title}</span><span className={`stat-icon ${color}`}><Icon name={icon}/></span></div><div className="stat-bottom"><div><strong>{value}</strong><div className="stat-foot"><b>↗ {change}</b> {foot}</div></div><svg className="sparkline" viewBox="0 0 140 45" preserveAspectRatio="none"><path d={chart} fill="none" stroke={color === "lavender" ? "#8875e5" : color === "blue" ? "#6d9fee" : color === "green" ? "#55b99a" : "#e59c57"} strokeWidth="2.5" strokeLinecap="round"/></svg></div></div>;
+function Overview({ leads, profilesCount, discoveriesCount, openLead, goDiscoveries, openCreate }: { leads: Lead[]; profilesCount: number; discoveriesCount: number; openLead: (l: Lead) => void; goDiscoveries: () => void; openCreate: () => void }) {
+  const qualifiedCount = leads.filter(l => l.stage === "Qualification").length;
+  return <div className="content overview-content">
+    <div className="page-heading">
+      <div>
+        <div className="eyebrow">OVERVIEW</div>
+        <h1>Pipeline overview</h1>
+        <p>Summary of your ICP, active location discoveries, and recent leads.</p>
+      </div>
+      <div className="heading-actions">
+        <button className="button primary" onClick={openCreate}><Icon name="plus"/>New ICP</button>
+      </div>
+    </div>
+    <section className="stats-grid">
+      <Stat title="ICP" value={String(profilesCount)} foot="Saved targeting definitions" icon="target" color="lavender" />
+      <Stat title="Active discoveries" value={String(discoveriesCount)} foot="Location-scoped runs" icon="spark" color="blue" />
+      <Stat title="Leads discovered" value={String(leads.length)} foot="Prospects in workspace" icon="users" color="green" />
+      <Stat title="In qualification" value={String(qualifiedCount)} foot="Active opportunities" icon="message" color="orange" />
+    </section>
+    <section className="panel recent-panel">
+      <div className="panel-head">
+        <div>
+          <h2>Recent leads</h2>
+          <p>Your latest discovered prospects</p>
+        </div>
+        <button className="link-button" onClick={goDiscoveries}>View discoveries <span>→</span></button>
+      </div>
+      <div className="table-wrap"><LeadTable leads={leads.slice(0, 4)} openLead={openLead}/></div>
+    </section>
+  </div>;
+}
+
+function Stat({ title, value, foot, icon, color }: { title: string; value: string; foot: string; icon: string; color: string }) {
+  return <div className="stat-card">
+    <div className="stat-top">
+      <span>{title}</span>
+      <span className={`stat-icon ${color}`}><Icon name={icon}/></span>
+    </div>
+    <div className="stat-bottom">
+      <div>
+        <strong>{value}</strong>
+        <div className="stat-foot">{foot}</div>
+      </div>
+    </div>
+  </div>;
 }
 
 function Profiles({ profiles, discoveryCounts, openCreate, onRunSearch }: { profiles: IcpProfile[]; discoveryCounts: Map<string, number>; openCreate: () => void; onRunSearch: (profile: IcpProfile) => void }) {
-  return <div className="content profiles-content"><div className="page-heading"><div><div className="eyebrow">TARGETING</div><h1>ICP profiles</h1><p>Reusable definitions of your ideal customers. Discover them in as many locations as you need.</p></div><button className="button primary" onClick={openCreate}><Icon name="plus"/>Create ICP profile</button></div><section className="profile-explainer"><span className="discovery-icon purple"><Icon name="target"/></span><div><b>Define once, search by location</b><span>An ICP profile stores industry, company size, and target roles. Each location search creates its own ICP discovery and pipeline.</span></div><span className="profile-flow">ICP profile <i>→</i> Location discovery</span></section><div className="section-title"><div><h2>Saved ICP profiles</h2><span className="count-pill">{profiles.length}</span></div></div><section className="panel profile-list-panel"><div className="table-wrap"><table><thead><tr><th>ICP PROFILE</th><th>INDUSTRY</th><th>COMPANY SIZE</th><th>TARGET ROLES</th><th>DISCOVERIES</th><th/></tr></thead><tbody>{profiles.map(profile => <tr key={profile.id}><td><div className="discovery-name-cell"><span className="discovery-icon purple"><Icon name="target"/></span><span><strong>{profile.name}</strong><small>Reusable targeting criteria</small></span></div></td><td>{profile.industry || "Any industry"}</td><td>{profile.companySize || "Any size"}</td><td>{profile.targetRoles || "Any decision maker"}</td><td><span className="count-pill">{discoveryCounts.get(profile.name) ?? 0} locations</span></td><td><button className="button secondary profile-search-button" onClick={() => onRunSearch(profile)}><Icon name="pin"/>Discover in a location</button></td></tr>)}</tbody></table></div></section></div>;
+  return <div className="content profiles-content">
+    <div className="page-heading">
+      <div>
+        <div className="eyebrow">TARGETING</div>
+        <h1>ICP</h1>
+        <p>Reusable definitions of your ideal customers. Discover them in as many locations as you need.</p>
+      </div>
+      <button className="button primary" onClick={openCreate}><Icon name="plus"/>Create ICP</button>
+    </div>
+    <div className="section-title"><div><h2>Saved ICP</h2><span className="count-pill">{profiles.length}</span></div></div>
+    <section className="panel profile-list-panel">
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ICP</th><th>INDUSTRY</th><th>COMPANY SIZE</th><th>TARGET ROLES</th><th>DISCOVERIES</th><th/></tr>
+          </thead>
+          <tbody>
+            {profiles.map(profile => <tr key={profile.id}>
+              <td><div className="discovery-name-cell"><span className="discovery-icon purple"><Icon name="target"/></span><span><strong>{profile.name}</strong><small>Reusable targeting criteria</small></span></div></td>
+              <td>{profile.industry || "Any industry"}</td>
+              <td>{profile.companySize || "Any size"}</td>
+              <td>{profile.targetRoles || "Any decision maker"}</td>
+              <td><span className="count-pill">{discoveryCounts.get(profile.name) ?? 0} locations</span></td>
+              <td><button className="button secondary profile-search-button" onClick={() => onRunSearch(profile)}><Icon name="pin"/>Discover in a location</button></td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>;
 }
 
 function LocationDiscoveryModal({ profile, close, onStart }: { profile: IcpProfile; close: () => void; onStart: (p: IcpProfile, location: string) => void }) {
   const [searchLocation, setSearchLocation] = useState("");
-  return <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) close(); }}><section className="create-modal form-only-modal location-modal"><header className="modal-header"><div><span className="modal-mark"><Icon name="pin"/></span><div><h2>Start an ICP discovery</h2><p>Search this saved profile in a specific location.</p></div></div><button className="modal-close" onClick={close}>×</button></header><form className="discovery-form" onSubmit={e => { e.preventDefault(); onStart(profile, searchLocation); }}><div className="selected-profile"><span className="discovery-icon purple"><Icon name="target"/></span><div><small>REUSABLE ICP PROFILE</small><b>{profile.name}</b><span>{[profile.industry, profile.companySize, profile.targetRoles].filter(Boolean).join(" · ")}</span></div></div><label>Search location<input autoFocus value={searchLocation} onChange={e => setSearchLocation(e.target.value)} placeholder="e.g. Colombia, New York, DACH" required/></label><div className="location-note"><Icon name="spark"/><span>This creates a new location-scoped discovery. Your saved ICP profile stays reusable for future searches.</span></div><div className="form-footer"><span>✦ &nbsp;Location is part of the discovery run.</span><button type="button" className="button secondary" onClick={close}>Cancel</button><button className="button primary"><Icon name="spark"/>Search this location</button></div></form></section></div>;
+  return <div className="modal-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) close(); }}>
+    <section className="create-modal form-only-modal location-modal">
+      <header className="modal-header">
+        <div>
+          <span className="modal-mark"><Icon name="pin"/></span>
+          <div>
+            <h2>Start an ICP discovery</h2>
+            <p>Search this saved ICP in a specific location.</p>
+          </div>
+        </div>
+        <button className="modal-close" onClick={close}>×</button>
+      </header>
+      <form className="discovery-form" onSubmit={e => { e.preventDefault(); onStart(profile, searchLocation); }}>
+        <div className="selected-profile">
+          <span className="discovery-icon purple"><Icon name="target"/></span>
+          <div>
+            <small>REUSABLE ICP</small>
+            <b>{profile.name}</b>
+            <span>{[profile.industry, profile.companySize, profile.targetRoles].filter(Boolean).join(" · ")}</span>
+          </div>
+        </div>
+        <label>Search location<input autoFocus value={searchLocation} onChange={e => setSearchLocation(e.target.value)} placeholder="e.g. Colombia, New York, DACH" required/></label>
+        <div className="form-footer">
+          <button type="button" className="button secondary" onClick={close}>Cancel</button>
+          <button className="button primary"><Icon name="spark"/>Search this location</button>
+        </div>
+      </form>
+    </section>
+  </div>;
 }
 
-function Discoveries({ searches, profiles, createdRuns, openDiscovery, openCreate }: { searches: Search[]; profiles: IcpProfile[]; createdRuns: Discovery[]; openDiscovery: (d: Discovery) => void; openCreate: () => void }) {
-  const allDiscoveries: Discovery[] = [...discoveries, ...createdRuns, ...searches.map(s => { const profile = profiles.find(p => s.query.startsWith(p.name)); return { name: profile?.name ?? s.query, meta: profile ? [profile.industry, profile.companySize, profile.targetRoles].filter(Boolean).join(" · ") : "ICP profile from your targeting criteria", location: s.location, count: 0, contacted: 0, rejected: 0, fresh: 0, date: s.status, color: "purple", leadIds: [] }; })];
-  return <div className="content discoveries-content"><div className="page-heading"><div><div className="eyebrow">PROSPECTING</div><h1>ICP discoveries</h1><p>Explore location-based searches created from reusable ICP profiles.</p></div><button className="button primary" onClick={openCreate}><Icon name="target"/>Choose ICP profile</button></div>
-    <section className="discovery-callout"><div className="callout-icon"><Icon name="spark"/></div><div className="callout-copy"><b>Discover your next best customers</b><span>Each discovery tracks matching leads, outreach, and outcomes for one ideal customer profile.</span></div><button className="callout-action" onClick={openCreate}>Choose an ICP profile <span>→</span></button></section>
-    <div className="section-title"><div><h2>Your discoveries</h2><span className="count-pill">{allDiscoveries.length}</span></div><button className="text-control">Recently updated <span>⌄</span></button></div>
-    <section className="panel discovery-list-panel"><div className="table-wrap"><table><thead><tr><th>ICP PROFILE</th><th>SEARCH LOCATION</th><th>LEADS FOUND</th><th>CONTACTED</th><th>REJECTED</th><th>NEW LEADS</th><th>LAST UPDATED</th><th/></tr></thead><tbody>{allDiscoveries.map((d, i) => <tr key={`${d.name}-${i}`} onClick={() => openDiscovery(d)}><td><div className="discovery-name-cell"><span className={`discovery-icon ${d.color}`}><Icon name="target"/></span><span><strong>{d.name}</strong><small>{d.meta}</small></span></div></td><td><span className="location-cell"><Icon name="pin"/>{d.location}</span></td><td><b className="table-metric">{d.count}</b></td><td><b className="table-metric">{d.contacted}</b></td><td><b className="table-metric rejected-metric">{d.rejected}</b></td><td><span className="fresh-pill">+{d.fresh}</span></td><td><span className="activity-text">◷ &nbsp;{d.date}</span></td><td><button className="row-more" onClick={e => { e.stopPropagation(); openDiscovery(d); }}>···</button></td></tr>)}</tbody></table></div></section>
+function Discoveries({ discoveries: allDiscoveries, openDiscovery, openCreate }: { discoveries: Discovery[]; openDiscovery: (d: Discovery) => void; openCreate: () => void }) {
+  return <div className="content discoveries-content">
+    <div className="page-heading">
+      <div>
+        <div className="eyebrow">PROSPECTING</div>
+        <h1>ICP discoveries</h1>
+        <p>Explore location-based searches created from reusable ICP.</p>
+      </div>
+      <button className="button primary" onClick={openCreate}><Icon name="target"/>Choose ICP</button>
+    </div>
+    <div className="section-title">
+      <div><h2>Your discoveries</h2><span className="count-pill">{allDiscoveries.length}</span></div>
+    </div>
+    <section className="panel discovery-list-panel">
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ICP</th><th>SEARCH LOCATION</th><th>LEADS FOUND</th><th>CONTACTED</th><th>REJECTED</th><th>NEW LEADS</th><th>LAST UPDATED</th></tr>
+          </thead>
+          <tbody>
+            {allDiscoveries.map((d, i) => <tr key={`${d.name}-${i}`} onClick={() => openDiscovery(d)}>
+              <td><div className="discovery-name-cell"><span className={`discovery-icon ${d.color}`}><Icon name="target"/></span><span><strong>{d.name}</strong><small>{d.meta}</small></span></div></td>
+              <td><span className="location-cell"><Icon name="pin"/>{d.location}</span></td>
+              <td><b className="table-metric">{d.count}</b></td>
+              <td><b className="table-metric">{d.contacted}</b></td>
+              <td><b className="table-metric rejected-metric">{d.rejected}</b></td>
+              <td><span className="fresh-pill">+{d.fresh}</span></td>
+              <td><span className="activity-text">◷ &nbsp;{d.date}</span></td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>;
 }
 
 function DiscoveryDetail({ discovery, back, openLead }: { discovery: Discovery; back: () => void; openLead: (l: Lead) => void }) {
   const [filter, setFilter] = useState("All leads");
-  const [searchPipelineOpen, setSearchPipelineOpen] = useState(false);
   const discoveryLeads = leads.filter(l => discovery.leadIds.includes(l.id));
   const shown = discoveryLeads.filter(l => filter === "All leads" || l.stage === filter);
-  return <div className="content discovery-detail-content"><button className="back-link" onClick={back}>← &nbsp;All ICP discoveries</button><div className="page-heading discovery-detail-heading"><div><div className="eyebrow">ICP DISCOVERY</div><h1>{discovery.name}</h1><p>{discovery.meta}</p></div><div className="heading-actions"><button className="button secondary"><Icon name="edit"/>Edit ICP profile</button><button className="button primary" onClick={() => setSearchPipelineOpen(true)}><Icon name="spark"/>Find more leads</button></div></div>
-    <section className="discovery-scope"><div><span className="scope-label"><Icon name="target"/> REUSABLE ICP PROFILE</span><b>{discovery.name}</b><small>{discovery.meta} · {"roles: revenue, growth, sales"}</small></div><span className="scope-arrow">→</span><div><span className="scope-label"><Icon name="pin"/> LOCATION-SCOPED DISCOVERY</span><b>{discovery.location}</b><small>Search this ICP in this location; repeat in other locations as needed.</small></div></section>
-    <section className="discovery-stats"><div className="discovery-stat"><span className="discovery-stat-icon purple-stat"><Icon name="users"/></span><div><small>Leads found</small><strong>{discovery.count}</strong><span className="stat-note">Across this discovery</span></div></div><div className="discovery-stat"><span className="discovery-stat-icon blue-stat"><Icon name="send"/></span><div><small>Contacted</small><strong>{discovery.contacted}</strong><span className="stat-note">{Math.round(discovery.contacted / Math.max(1, discovery.count) * 100)}% of leads found</span></div></div><div className="discovery-stat"><span className="discovery-stat-icon red-stat"><Icon name="inbox"/></span><div><small>Rejected</small><strong>{discovery.rejected}</strong><span className="stat-note">Excluded from outreach</span></div></div><div className="discovery-stat"><span className="discovery-stat-icon green-stat"><Icon name="message"/></span><div><small>In qualification</small><strong>{Math.max(0, discovery.contacted - discovery.rejected - 12)}</strong><span className="stat-note">Active opportunities</span></div></div></section>
-    <section className="panel leads-panel discovery-leads-panel"><div className="leads-heading"><div><h2>Leads in this discovery</h2><p>People matching “{discovery.name}”</p></div><button className="button secondary"><Icon name="download"/>Export</button></div><div className="lead-controls"><div className="filter-tabs">{["All leads", "Discovery", "First contact", "Qualification"].map(t => <button className={filter === t ? "filter-active" : ""} key={t} onClick={() => setFilter(t)}>{t}{t === "All leads" && <span>{discovery.count}</span>}</button>)}</div><div className="table-tools"><button className="button secondary small-button"><Icon name="filter"/>Filters</button><button className="button secondary small-button"><Icon name="sliders"/>Columns</button><button className="search-box"><Icon name="search"/><span>Search leads</span><kbd>⌘ K</kbd></button></div></div><div className="table-wrap"><LeadTable leads={shown} openLead={openLead}/></div><div className="table-footer"><span>Showing <b>{shown.length}</b> of <b>{discovery.count}</b> leads</span><div><button disabled>←</button><button className="page-number">1</button><button>2</button><button>3</button><span>…</span><button>→</button></div></div></section>
-    {searchPipelineOpen && <SearchPipeline location={discovery.location} onClose={() => setSearchPipelineOpen(false)} />}
+  return <div className="content discovery-detail-content">
+    <button className="back-link" onClick={back}>← &nbsp;All ICP discoveries</button>
+    <div className="page-heading discovery-detail-heading">
+      <div>
+        <div className="eyebrow">ICP DISCOVERY · {discovery.location.toUpperCase()}</div>
+        <h1>{discovery.name}</h1>
+        <p>{discovery.meta}</p>
+      </div>
+    </div>
+    <section className="discovery-stats">
+      <div className="discovery-stat"><span className="discovery-stat-icon purple-stat"><Icon name="users"/></span><div><small>Leads found</small><strong>{discovery.count}</strong><span className="stat-note">Across this discovery</span></div></div>
+      <div className="discovery-stat"><span className="discovery-stat-icon blue-stat"><Icon name="send"/></span><div><small>Contacted</small><strong>{discovery.contacted}</strong><span className="stat-note">{Math.round(discovery.contacted / Math.max(1, discovery.count) * 100)}% of leads found</span></div></div>
+      <div className="discovery-stat"><span className="discovery-stat-icon red-stat"><Icon name="inbox"/></span><div><small>Rejected</small><strong>{discovery.rejected}</strong><span className="stat-note">Excluded from outreach</span></div></div>
+      <div className="discovery-stat"><span className="discovery-stat-icon green-stat"><Icon name="message"/></span><div><small>In qualification</small><strong>{discoveryLeads.filter(l => l.stage === "Qualification").length}</strong><span className="stat-note">Active opportunities</span></div></div>
+    </section>
+    <section className="panel leads-panel discovery-leads-panel">
+      <div className="leads-heading">
+        <div>
+          <h2>Leads in this discovery</h2>
+          <p>People matching “{discovery.name}” in {discovery.location}</p>
+        </div>
+      </div>
+      <div className="lead-controls">
+        <div className="filter-tabs">
+          {["All leads", "Discovery", "First contact", "Qualification"].map(t => <button className={filter === t ? "filter-active" : ""} key={t} onClick={() => setFilter(t)}>{t}{t === "All leads" && <span>{discoveryLeads.length}</span>}</button>)}
+        </div>
+      </div>
+      <div className="table-wrap"><LeadTable leads={shown} openLead={openLead}/></div>
+      <div className="table-footer"><span>Showing <b>{shown.length}</b> of <b>{discoveryLeads.length}</b> leads</span></div>
+    </section>
   </div>;
-}
-
-function SearchPipeline({ location, onClose }: { location: string; onClose: () => void }) {
-  const [step, setStep] = useState(0);
-  const [launched, setLaunched] = useState(false);
-  useEffect(() => {
-    const timers = [900, 2100, 3500, 4900].map((delay, index) => window.setTimeout(() => setStep(index + 1), delay));
-    return () => timers.forEach(window.clearTimeout);
-  }, []);
-  const steps = [
-    { title: `Search company landscape in ${location}`, detail: "Estimate companies that match the selected geography.", value: "2,480 companies" },
-    { title: "Match companies against this ICP", detail: "Apply industry, company size, and role criteria.", value: "136 ICP matches" },
-    { title: "Reconcile with your existing database", detail: "Remove companies and people already in your workspace.", value: "42 already known · 94 net new" },
-    { title: "Prepare first contact", detail: "Create a contactable lead list from net new matches.", value: "94 leads ready" },
-  ];
-  return <div className="pipeline-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}><section className="pipeline-modal"><header className="pipeline-modal-head"><div><span className="modal-mark"><Icon name="spark"/></span><div><h2>{launched ? "Contact launch queued" : "Finding more leads"}</h2><p>{launched ? `First contact is ready for ${location}.` : `Running this ICP discovery in ${location}.`}</p></div></div><button className="modal-close" onClick={onClose}>×</button></header><div className="pipeline-modal-body"><div className="pipeline-visual"><div className={`pipeline-orbit ${step >= 1 ? "active" : ""}`}><span className="orbit-pin"><Icon name="pin"/></span><span className="orbit-core"><Icon name={launched ? "send" : "target"}/></span><span className="orbit-ring ring-one"/><span className="orbit-ring ring-two"/></div><div className="pipeline-location"><small>SEARCH LOCATION</small><b>{location}</b></div></div><div className="pipeline-stages">{steps.map((item, index) => { const current = step === index; const done = step > index || launched; return <div key={item.title} className={`pipeline-stage-row ${done ? "complete" : ""} ${current ? "current" : ""}`}><span className="pipeline-stage-indicator">{done ? "✓" : current ? <i/> : index + 1}</span><div className="pipeline-stage-copy"><b>{item.title}</b><small>{item.detail}</small>{step > index && <strong>{item.value}</strong>}</div></div>; })}</div>{launched && <div className="launch-success"><span>✓</span><div><b>First contact launch started</b><small>94 net new leads are queued for your outreach workflow.</small></div></div>}</div><footer className="pipeline-modal-footer"><span>{launched ? "This demo illustrates the discovery workflow." : step < 4 ? <><i className="loading-dot"/> {steps[Math.min(step, 3)].title}…</> : "Review the matched and net new companies above."}</span>{step >= 4 && !launched && <button className="button primary" onClick={() => setLaunched(true)}><Icon name="send"/>Launch first contact</button>}{launched && <button className="button secondary" onClick={onClose}>Done</button>}</footer></section></div>;
 }
 
 function LeadTable({ leads: rows, openLead }: { leads: Lead[]; openLead: (l: Lead) => void }) {
-  return <table><thead><tr><th><input type="checkbox" aria-label="Select all leads"/></th><th>PERSON</th><th>COMPANY</th><th>ICP MATCH</th><th>PIPELINE STAGE</th><th>LAST ACTIVITY</th><th/></tr></thead><tbody>{rows.map(lead => <tr key={lead.id} onClick={() => openLead(lead)}><td><input type="checkbox" aria-label={`Select ${lead.name}`} onClick={e => e.stopPropagation()}/></td><td><div className="person-cell"><div className={`avatar ${lead.color}`}>{lead.initials}</div><div><strong>{lead.name}</strong><small>{lead.role}</small></div></div></td><td><div className="company-cell"><span className="company-logo">{lead.company.slice(0, 1)}</span><div><strong>{lead.company}</strong><small>{lead.industry}</small></div></div></td><td><div className="score-cell"><span className="score-track"><i style={{ width: `${lead.score}%` }}/></span><b>{lead.score}%</b></div></td><td><Stage stage={lead.stage}/></td><td><span className="activity-text">{lead.date}</span></td><td><button className="row-more" onClick={e => { e.stopPropagation(); openLead(lead); }}>···</button></td></tr>)}</tbody></table>;
+  return <table>
+    <thead>
+      <tr><th>PERSON</th><th>COMPANY</th><th>ICP MATCH</th><th>PIPELINE STAGE</th><th>LAST ACTIVITY</th></tr>
+    </thead>
+    <tbody>
+      {rows.map(lead => <tr key={lead.id} onClick={() => openLead(lead)}>
+        <td><div className="person-cell"><div className={`avatar ${lead.color}`}>{lead.initials}</div><div><strong>{lead.name}</strong><small>{lead.role}</small></div></div></td>
+        <td><div className="company-cell"><span className="company-logo">{lead.company.slice(0, 1)}</span><div><strong>{lead.company}</strong><small>{lead.industry}</small></div></div></td>
+        <td><div className="score-cell"><span className="score-track"><i style={{ width: `${lead.score}%` }}/></span><b>{lead.score}%</b></div></td>
+        <td><Stage stage={lead.stage}/></td>
+        <td><span className="activity-text">{lead.date}</span></td>
+      </tr>)}
+    </tbody>
+  </table>;
 }
 function Stage({ stage }: { stage: Lead["stage"] }) { return <span className={`stage stage-${stage.toLowerCase().replace(" ", "-")}`}><i/>{stage}</span>; }
 
-function Detail({ lead, back, discovery }: { lead: Lead; back: () => void; discovery: Discovery }) {
-  const [tab, setTab] = useState("Overview");
-  return <div className="content detail-content"><button className="back-link" onClick={back}>← &nbsp;All discoveries</button><div className="detail-heading"><div className="detail-profile"><div className={`avatar detail-avatar ${lead.color}`}>{lead.initials}</div><div><div className="detail-name-line"><h1>{lead.name}</h1><button className="icon-button tiny-icon"><Icon name="external"/></button></div><p>{lead.role} <span>at</span> <b>{lead.company}</b></p><div className="detail-tags"><span className="tag">{lead.industry}</span><span className="tag">{lead.location}</span><span className="tag match-tag"><Icon name="spark"/>{lead.score}% ICP match</span></div></div></div><div className="detail-actions"><button className="button secondary"><Icon name="edit"/>Edit lead</button><button className="button primary"><Icon name="send"/>Send message</button></div></div>
-    <div className="pipeline"><div className="pipeline-step done"><span className="step-check">✓</span><span>Discovery</span></div><div className="pipeline-line done-line"/><div className={`pipeline-step ${lead.stage === "Discovery" ? "current" : "done"}`}><span className="step-check">{lead.stage === "Discovery" ? "2" : "✓"}</span><span>First contact</span></div><div className={`pipeline-line ${lead.stage === "Qualification" ? "done-line" : ""}`}/><div className={`pipeline-step ${lead.stage === "Qualification" ? "current" : ""}`}><span className="step-check">3</span><span>Qualification</span></div><button className="move-stage">Move stage <span>⌄</span></button></div>
-    <div className="detail-tabs">{["Overview", "First contact", "Activity"].map(t => <button key={t} onClick={() => setTab(t)} className={tab === t ? "detail-tab-active" : ""}>{t}{t === "First contact" && <span className="tab-unread">2</span>}</button>)}</div>
-    {tab === "Overview" && <div className="detail-layout"><div className="detail-main-col"><section className="panel info-panel"><div className="panel-head"><div><h2>Lead overview</h2><p>Key details about this prospect</p></div><button className="more-button">···</button></div><div className="info-grid"><Info label="Work email" value={lead.email} icon="mail"/><Info label="LinkedIn" value={lead.linkedin} icon="external"/><Info label="Company size" value={lead.size} icon="users"/><Info label="Location" value={lead.location} icon="pin"/><Info label="Industry" value={lead.industry} icon="building"/><Info label="Lead source" value={discovery.name} icon="spark"/></div></section><section className="panel fit-panel"><div className="panel-head"><div><h2>Why this lead matches</h2><p>Signals aligned with your ideal customer profile</p></div><span className="match-score">{lead.score}% match</span></div><div className="fit-signals"><span><i>✓</i> Company size fits your target</span><span><i>✓</i> Industry is a strong match</span><span><i>✓</i> Decision maker identified</span><span><i>✓</i> Active growth signals detected</span></div></section></div>
-      <aside className="detail-side-col"><section className="panel contact-card"><div className="panel-head"><div><h2>First contact</h2><p>{lead.date === "—" ? "No contact sent yet" : `Started ${lead.date}`}</p></div><button className="more-button">···</button></div>{lead.date !== "—" ? <><div className="contact-count"><span className="contact-icon"><Icon name="mail"/></span><div><b>2 messages</b><small>Email conversation</small></div><span className="reply-status">Replied</span></div><div className="message-preview"><span>LAST REPLY · OCT 17</span><p>“{lead.snippet.replace("…", ".")}"</p></div><button className="view-conversation" onClick={() => setTab("First contact")}>View conversation <span>→</span></button></> : <div className="empty-contact"><div className="empty-icon"><Icon name="send"/></div><b>Start a conversation</b><span>Send a personalized first message to {lead.name.split(" ")[0]}.</span><button className="button primary" onClick={() => setTab("First contact")}><Icon name="send"/>Compose message</button></div>}</section><section className="panel owner-card"><h2>Lead owner</h2><div className="owner-person"><div className="avatar profile-avatar">DR</div><div><b>David Rojas</b><small>Assigned to you</small></div><button className="more-button">⌄</button></div><div className="owner-meta"><span>Created</span><b>Oct 12, 2026</b></div><div className="owner-meta"><span>Last updated</span><b>Today, 10:42 AM</b></div></section></aside></div>}
-    {tab === "First contact" && <Conversation lead={lead}/>} {tab === "Activity" && <section className="panel activity-panel"><h2>Activity timeline</h2><div className="timeline-item"><span className="timeline-dot purple-dot"/><div><b>Lead discovered</b><span>Added to Series A SaaS revenue teams · Oct 12, 2026</span></div></div><div className="timeline-item"><span className="timeline-dot blue-dot"/><div><b>First message sent</b><span>Personalized outreach email · Oct 16, 2026</span></div></div><div className="timeline-item"><span className="timeline-dot green-dot"/><div><b>Reply received</b><span>{lead.snippet} · Today</span></div></div></section>}
+function Detail({ lead, back, backLabel, discovery }: { lead: Lead; back: () => void; backLabel: string; discovery: Discovery }) {
+  return <div className="content detail-content">
+    <button className="back-link" onClick={back}>← &nbsp;{backLabel}</button>
+    <div className="detail-heading">
+      <div className="detail-profile">
+        <div className={`avatar detail-avatar ${lead.color}`}>{lead.initials}</div>
+        <div>
+          <div className="detail-name-line"><h1>{lead.name}</h1></div>
+          <p>{lead.role} <span>at</span> <b>{lead.company}</b></p>
+          <div className="detail-tags">
+            <span className="tag">{lead.industry}</span>
+            <span className="tag">{lead.location}</span>
+            <span className="tag match-tag"><Icon name="spark"/>{lead.score}% ICP match</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div className="pipeline">
+      <div className="pipeline-step done"><span className="step-check">✓</span><span>Discovery</span></div>
+      <div className="pipeline-line done-line"/>
+      <div className={`pipeline-step ${lead.stage === "Discovery" ? "current" : "done"}`}><span className="step-check">{lead.stage === "Discovery" ? "2" : "✓"}</span><span>First contact</span></div>
+      <div className={`pipeline-line ${lead.stage === "Qualification" ? "done-line" : ""}`}/>
+      <div className={`pipeline-step ${lead.stage === "Qualification" ? "current" : ""}`}><span className="step-check">3</span><span>Qualification</span></div>
+    </div>
+    <div className="detail-layout">
+      <section className="panel info-panel">
+        <div className="panel-head">
+          <div><h2>Lead overview</h2><p>Key details about this prospect</p></div>
+        </div>
+        <div className="info-grid">
+          <Info label="Work email" value={lead.email} href={`mailto:${lead.email}`} icon="mail"/>
+          <Info label="LinkedIn" value={lead.linkedin} href={`https://${lead.linkedin}`} icon="external"/>
+          <Info label="Company size" value={lead.size} icon="users"/>
+          <Info label="Location" value={lead.location} icon="pin"/>
+          <Info label="Industry" value={lead.industry} icon="building"/>
+          <Info label="Lead source" value={discovery.name} icon="spark"/>
+        </div>
+      </section>
+      <section className="panel fit-panel">
+        <div className="panel-head">
+          <div><h2>Why this lead matches</h2><p>Signals aligned with your ideal customer profile</p></div>
+          <span className="match-score">{lead.score}% match</span>
+        </div>
+        <div className="fit-signals">
+          <span><i>✓</i> Company size fits your target ({lead.size})</span>
+          <span><i>✓</i> Industry match ({lead.industry})</span>
+          <span><i>✓</i> Decision maker role ({lead.role})</span>
+          <span><i>✓</i> Located in {lead.location}</span>
+        </div>
+      </section>
+    </div>
   </div>;
 }
-function Info({ label, value, icon }: { label: string; value: string; icon: string }) { return <div className="info-item"><span className="info-icon"><Icon name={icon}/></span><div><small>{label}</small><b>{value}</b></div></div>; }
-function Conversation({ lead }: { lead: Lead }) {
-  return <div className="conversation-layout"><section className="panel conversation-panel"><div className="conversation-head"><div><h2>Email conversation</h2><p><span className="reply-status"><i/> Active conversation</span><span className="conversation-address"> · {lead.email}</span></p></div><button className="button secondary small-button"><Icon name="external"/>Open in email</button></div><div className="conversation-thread"><div className="thread-date">THURSDAY, OCTOBER 16</div><div className="message-row"><div className="avatar profile-avatar">DR</div><div className="message-content"><div className="message-meta"><b>David Rojas <span>· You</span></b><span>2:18 PM</span></div><div className="message-bubble outbound"><div className="message-subject">A thought for Northstar’s revenue team</div><p>Hi {lead.name.split(" ")[0]},</p><p>I noticed Northstar has been growing the revenue team. We help SaaS teams turn their ideal customer profile into a steady pipeline of qualified conversations, without adding more manual research.</p><p>Curious how you’re thinking about outbound discovery this quarter?</p><p>Best,<br/>David</p><div className="message-delivery">✓✓ &nbsp; Delivered</div></div></div></div><div className="thread-date today-date">FRIDAY, OCTOBER 17</div><div className="message-row"><div className={`avatar ${lead.color}`}>{lead.initials}</div><div className="message-content"><div className="message-meta"><b>{lead.name}</b><span>10:42 AM</span></div><div className="message-bubble inbound"><p>Hi David,</p><p>{lead.snippet.replace("…", ".")} We’ve got a small team and research is taking a lot of time right now. Happy to learn more about how this works.</p><p>Best,<br/>{lead.name.split(" ")[0]}</p></div></div></div></div><div className="reply-composer"><div className="composer-top"><span>Reply to {lead.name}</span><span>↗</span></div><textarea placeholder="Write a thoughtful reply…"/><div className="composer-bottom"><div><button aria-label="Attach file">＋</button><button aria-label="Insert template">✧</button><span>Make it personal. Keep it human.</span></div><button className="button primary"><Icon name="send"/>Send reply</button></div></div></section><aside className="panel conversation-aside"><div className="avatar detail-avatar lilac">{lead.initials}</div><h3>{lead.name}</h3><p>{lead.role}</p><div className="aside-company"><span className="company-logo">{lead.company.slice(0, 1)}</span><b>{lead.company}</b></div><div className="aside-separator"/><div className="aside-data"><small>PIPELINE STAGE</small><Stage stage={lead.stage}/></div><div className="aside-data"><small>ICP MATCH</small><b className="aside-match">{lead.score}%</b></div><div className="aside-data"><small>EMAIL</small><span>{lead.email}</span></div><div className="aside-data"><small>DISCOVERY</small><span>Series A SaaS revenue teams</span></div></aside></div>;
+function Info({ label, value, href, icon }: { label: string; value: string; href?: string; icon: string }) {
+  return <div className="info-item">
+    <span className="info-icon"><Icon name={icon}/></span>
+    <div>
+      <small>{label}</small>
+      {href ? <a href={href} target="_blank" rel="noreferrer" className="info-link">{value}</a> : <b>{value}</b>}
+    </div>
+  </div>;
 }
 
 function Icon({ name }: { name: string }) {
@@ -231,13 +497,15 @@ function Icon({ name }: { name: string }) {
     grid: <><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>,
     spark: <><path d="m12 3 1.9 5.8L20 11l-6.1 2.2L12 19l-2-5.8L4 11l6-2.2L12 3Z"/><path d="m19 14 .8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14Z"/></>,
     users: <><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="9.5" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
-    building: <><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 21v-4h6v4M8 7h1m6 0h1M8 11h1m6 0h1"/></>, mail: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>,
-    inbox: <><path d="M4 4h16l2 11h-6l-2 3h-4l-2-3H2L4 4Z"/><path d="M2 15h6l2 3h4l2-3h6"/></>, chart: <><path d="M3 3v18h18"/><path d="m7 14 4-4 4 3 6-7"/></>,
-    search: <><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></>, bell: <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></>,
-    download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></>, plus: <><path d="M12 5v14M5 12h14"/></>, calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></>,
-    send: <><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></>, message: <><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z"/></>,
-    target: <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></>, filter: <><path d="M4 7h16M7 12h10m-7 5h4"/><circle cx="8" cy="7" r="1" fill="currentColor"/><circle cx="15" cy="12" r="1" fill="currentColor"/></>, sliders: <><path d="M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M2 14h4m4-6h4m4 8h4"/></>,
-    external: <><path d="M14 3h7v7m0-7L10 14"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></>, edit: <><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></>, pin: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2"/></>,
+    building: <><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 21v-4h6v4M8 7h1m6 0h1M8 11h1m6 0h1"/></>,
+    mail: <><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></>,
+    inbox: <><path d="M4 4h16l2 11h-6l-2 3h-4l-2-3H2L4 4Z"/><path d="M2 15h6l2 3h4l2-3h6"/></>,
+    plus: <><path d="M12 5v14M5 12h14"/></>,
+    send: <><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></>,
+    message: <><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5Z"/></>,
+    target: <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></>,
+    external: <><path d="M14 3h7v7m0-7L10 14"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></>,
+    pin: <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2"/></>,
   };
   return <svg {...common}>{paths[name] ?? paths.spark}</svg>;
 }

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from uuid import UUID
 
 from dealcompass_api.application.ports import JobQueue, SearchRepository
 from dealcompass_api.domain.leads import Search
@@ -10,6 +11,7 @@ DISCOVER_COMPANIES = "discover_companies"
 class CreateSearchCommand:
     query: str
     location: str
+    icp_id: UUID | None = None
 
 
 class CreateSearchUseCase:
@@ -18,6 +20,8 @@ class CreateSearchUseCase:
         self._queue = queue
 
     async def execute(self, command: CreateSearchCommand) -> Search:
-        search = await self._searches.save(Search(query=command.query, location=command.location))
+        search = await self._searches.save(
+            Search(query=command.query, location=command.location, icp_id=command.icp_id)
+        )
         await self._queue.enqueue(DISCOVER_COMPANIES, {"search_id": str(search.id)})
         return search

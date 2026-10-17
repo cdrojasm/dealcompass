@@ -1,7 +1,15 @@
 from typing import Protocol
 from uuid import UUID
 
-from dealcompass_api.domain.leads import Lead, Search
+from dealcompass_api.domain.leads import Icp, Lead, Search
+
+
+class IcpRepository(Protocol):
+    async def save(self, icp: Icp) -> Icp: ...
+
+    async def get(self, icp_id: UUID) -> Icp | None: ...
+
+    async def list(self) -> list[Icp]: ...
 
 
 class SearchRepository(Protocol):

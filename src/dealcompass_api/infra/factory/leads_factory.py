@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from dealcompass_api.application.create_search import CreateSearchUseCase
 from dealcompass_api.infra.repositories.search_repository import (
+    SqlAlchemyIcpRepository,
     SqlAlchemyJobQueue,
     SqlAlchemyLeadRepository,
     SqlAlchemySearchRepository,
@@ -14,6 +15,10 @@ class LeadsFactory:
     @staticmethod
     def create_search(session: AsyncSession) -> CreateSearchUseCase:
         return CreateSearchUseCase(SqlAlchemySearchRepository(session), SqlAlchemyJobQueue(session))
+
+    @staticmethod
+    def icps(session: AsyncSession) -> SqlAlchemyIcpRepository:
+        return SqlAlchemyIcpRepository(session)
 
     @staticmethod
     def searches(session: AsyncSession) -> SqlAlchemySearchRepository:
