@@ -40,4 +40,8 @@ railway config plan
 railway config apply
 ```
 
-Define como secretos del servicio `worker`: `OPENROUTER_API_KEY`, `GOOGLE_MAPS_API_KEY`, `APIFY_TOKEN`, `DAPTA_API_KEY`.
+La infraestructura se define en `.railway/railway.ts`. Despliega cuatro recursos: PostgreSQL, API FastAPI, worker Python y `app` como estáticos servidos por Nginx. `app` es el único servicio público; publica el frontend en `/app` y pasa `/api` a la API por la red privada.
+
+Para habilitar Serverless en la API, después del primer despliegue abre el servicio `api` en Railway y activa **Settings → Deploy → Serverless**. Railway aplica el cambio al siguiente despliegue. La API usa Python 3.12 y puede dormir entre solicitudes; la primera solicitud puede tardar más mientras despierta. Serverless es un ajuste del servicio de Railway y no está disponible como propiedad en la referencia actual de IaC.
+
+El `worker` ejecuta el polling continuo de la cola PostgreSQL, así que debe permanecer activo para procesar trabajos sin demora. Define como secretos del servicio `worker`: `OPENROUTER_API_KEY`, `GOOGLE_MAPS_API_KEY`, `APIFY_TOKEN` y `DAPTA_API_KEY`.
