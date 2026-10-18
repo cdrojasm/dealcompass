@@ -7,6 +7,7 @@ job ``kind`` in ``HANDLERS``.
 
 import asyncio
 import logging
+import sys
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 
@@ -55,15 +56,36 @@ async def claim_and_run() -> bool:
         return True
 
 
+async def bootstrap_schema() -> bool:
+    """Create tables if possible. Returns False when the DB is unreachable."""
+    try:
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+        return True
+    except Exception:
+        logger.exception("Database bootstrap failed; worker will retry on next poll")
+        return False
+
+
 async def main() -> None:
     settings = get_settings()
     logging.basicConfig(level=settings.log_level)
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
+    await bootstrap_schema()
     while True:
-        if not await claim_and_run():
+        try:
+            claimed = await claim_and_run()
+        except Exception:
+            # Same tolerance as the API: a down database must not kill the
+            # process; it retries on the next poll.
+            logger.exception("Job poll failed; retrying")
+            claimed = False
+        if not claimed:
             await asyncio.sleep(settings.worker_poll_interval_seconds)
 
 
 if __name__ == "__main__":
+    if sys.platform == "win32":
+        # psycopg async mode needs a selector-based loop; Windows defaults to
+        # ProactorEventLoop, which psycopg rejects.
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     asyncio.run(main())

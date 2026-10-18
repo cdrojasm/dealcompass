@@ -4,6 +4,10 @@ from enum import StrEnum
 from uuid import UUID, uuid4
 
 
+class NotFoundError(LookupError):
+    """Raised when a requested domain entity does not exist."""
+
+
 class LeadStage(StrEnum):
     DISCOVERED = "discovered"
     CONTACTED = "contacted"
@@ -64,3 +68,9 @@ class Lead:
     linkedin: str | None = None
     last_activity_at: datetime | None = None
     created_at: datetime | None = None
+
+    def __post_init__(self) -> None:
+        if not self.company.strip():
+            raise ValueError("Lead company cannot be empty")
+        if not (0 <= self.score <= 100):
+            raise ValueError("Lead score must be between 0 and 100")

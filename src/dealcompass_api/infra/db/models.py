@@ -24,7 +24,9 @@ class SearchModel(Base):
     __table_args__ = (Index("ix_searches_icp_id", "icp_id"),)
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    icp_id: Mapped[UUID | None] = mapped_column(ForeignKey("icps.id", ondelete="SET NULL"), nullable=True)
+    icp_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("icps.id", ondelete="SET NULL"), nullable=True
+    )
     query: Mapped[str] = mapped_column(Text, nullable=False)
     location: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="queued")
@@ -33,7 +35,9 @@ class SearchModel(Base):
     rejected: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     fresh_leads: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
 
 
 class LeadModel(Base):
@@ -44,8 +48,12 @@ class LeadModel(Base):
     )
 
     id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    search_id: Mapped[UUID] = mapped_column(ForeignKey("searches.id", ondelete="CASCADE"), nullable=False)
-    icp_id: Mapped[UUID | None] = mapped_column(ForeignKey("icps.id", ondelete="SET NULL"), nullable=True)
+    search_id: Mapped[UUID] = mapped_column(
+        ForeignKey("searches.id", ondelete="CASCADE"), nullable=False
+    )
+    icp_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("icps.id", ondelete="SET NULL"), nullable=True
+    )
     name: Mapped[str] = mapped_column(Text, nullable=False, default="")
     role: Mapped[str] = mapped_column(Text, nullable=False, default="")
     company: Mapped[str] = mapped_column(Text, nullable=False)
